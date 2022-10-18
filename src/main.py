@@ -26,20 +26,21 @@ def read_dataset(path):
     return np.array(x), np.array(y)
 
 
-def get_entropy(y):
-    """Computes entropy given Y.
+def get_entropy(labels, total):
+    """Computes entropy given a dictionary containing counts for each label and the total number of all labels.
 
     Args:
-        y (np.ndarray): Numpy array of shape (N,). Represents class labels.
+        labels (dict): Dict containing counts for each label.
+        total (int): Sum of counts across all labels.
 
     Returns:
-        H (float): Returns information entropy given Y.
+        h (float): Returns information entropy given Y.
     """
     h = 0
-    labels = np.unique(y)
-    for label in labels:
-        pk = float(np.count_nonzero(y == label)) / len(y)
-        h -= pk * np.log2(pk)
+    for count in labels.values():
+        if count != 0:
+            pk = float(count) / total
+            h -= pk * np.log2(pk)
     return h
 
 
@@ -59,31 +60,43 @@ def find_split(x, y):
 
     # Returns
     max_gain = 0
-    split = None
-    feature = None
+    split = feature = None
 
     # Iterate over Features
-    _, features = np.shape(x)
+    features = x.shape[1]
     for i in range(features):
 
         # Sort on Feature
         p = np.argsort(x[:, i])
         x_sorted, y_sorted = x[p], y[p]
 
-        # Find Overall Entropy
-        h_all = get_entropy(y_sorted)
+        # Initialize running totals for each label
+        left, right = (
+            {label: 0 for label in np.unique(y)},
+            {label: np.count_nonzero(y == label) for label in np.unique(y)},
+        )
+        s_left = 0
+        s_right = total = sum(right.values())
 
-        # Find Optimal Split point For a Feature
-        for idx, val in enumerate(x_sorted[:, i]):
-            # Compute Gain
-            s_left, s_right = y_sorted[:idx], y_sorted[idx:]
-            h_left, h_right = get_entropy(s_left), get_entropy(s_right)
-            remainder = (h_left * len(s_left) / (len(y_sorted))) + (
-                h_right * len(s_right) / (len(y_sorted))
-            )
+        # Find overall entropy
+        h_all = get_entropy(right, total)
+
+        # Find optimal split point For a feature
+        for idx, val in enumerate(x_sorted[1:, i]):
+
+            # Update running totals
+            s_left += 1
+            s_right -= 1
+            left[y_sorted[idx]] += 1
+            right[y_sorted[idx]] -= 1
+
+            # Compute gain
+            h_left, h_right = get_entropy(
+                left, s_left), get_entropy(right, s_right)
+            remainder = (h_left * s_left / total) + (h_right * s_right / total)
             gain = h_all - remainder
 
-            # Keep Track of Maximum Gain
+            # Keep track of maximum gain
             if gain >= max_gain:
                 max_gain = gain
                 split = val
@@ -91,13 +104,18 @@ def find_split(x, y):
 
     return (feature, split)
 
-
 ###
 # Main
 ###
 
+
 if __name__ == "__main__":
+    # Parse
     path = "wifi_db/clean_dataset.txt"
     x, y = read_dataset(path)
     print(x[:5])
     print(y[:5])
+    # Compute Split
+    feature, split = find_split(x, y)
+    print(feature)
+    print(split)
