@@ -12,9 +12,10 @@ def read_dataset(path):
         path (str): Path to read the dataset from.
 
     Returns:
-        tuple: Returns a tuple (x, y) of numpy arrays.
+        tuple: Returns a tuple (x, y, z) of numpy arrays.
             - x: A numpy array with shape (N, K) where N is the number of instances and K is the number of features.
             - y: A numpy array with shape (N, ).
+            - z: A numpy array with shape (N, K+1). Includes the labels in the last column.
     """
     x, y = [], []
     for line in open(path):
@@ -23,7 +24,9 @@ def read_dataset(path):
             row = line.split("\t")
             x.append(list(map(float, row[:-1])))
             y.append(int(row[-1]))
-    return np.array(x), np.array(y)
+    x = np.array(x)
+    y = np.array(y)
+    return x, y, np.column_stack((x, y))
 
 
 def get_entropy(labels, total):
@@ -45,18 +48,18 @@ def get_entropy(labels, total):
 
 
 # TODO: Verify this works
-def find_split(x, y):
+def find_split(dataset):
     """Chooses value in X to split upon that results in the highest information gain.
 
     Args:
-        x (np.ndarray): Numpy array with shape (N, K) where N is the number of instances and K is the number of features.
-        y (np.ndarray): Numpy array of shape (N,). Represents class labels.
+        dataset (np.ndarray): Numpy array with shape (N, K+1). Includes K attributes and 1 label.
 
     Returns:
         Tuple: Returns a tuple of (feature, split).
             - feature (int): Feature that produced the maximum information gain.
-            - Split (float): Split upon feature.
+            - split (float): Split upon feature.
     """
+    x, y = dataset[:, :-1], dataset[:, -1]
 
     # Returns
     max_gain = 0
@@ -82,7 +85,20 @@ def find_split(x, y):
         h_all = get_entropy(right, total)
 
         # Find optimal split point For a feature
-        for idx, val in enumerate(x_sorted[1:, i]):
+        previous_val = None
+        for idx, val in enumerate(x_sorted[:, i]):
+            # Check for change in val
+            if previous_val != val:
+                # Compute gain
+                h_left, h_right = get_entropy(left, s_left), get_entropy(right, s_right)
+                remainder = (h_left * s_left / total) + (h_right * s_right / total)
+                gain = h_all - remainder
+
+                # Keep track of maximum gain
+                if gain >= max_gain:
+                    max_gain = gain
+                    split = val
+                    feature = i
 
             # Update running totals
             s_left += 1
@@ -90,32 +106,63 @@ def find_split(x, y):
             left[y_sorted[idx]] += 1
             right[y_sorted[idx]] -= 1
 
-            # Compute gain
-            h_left, h_right = get_entropy(
-                left, s_left), get_entropy(right, s_right)
-            remainder = (h_left * s_left / total) + (h_right * s_right / total)
-            gain = h_all - remainder
-
-            # Keep track of maximum gain
-            if gain >= max_gain:
-                max_gain = gain
-                split = val
-                feature = i
+            previous_val = val
 
     return (feature, split)
+
+
+###
+# Objects
+###
+
+
+class Node:
+    def __init__(self, left=None, right=None, attribute=None, value=None):
+        self.left = left
+        self.right = right
+        self.attribute = attribute
+        self.value = value
+
+
+def decision_tree_learning(dataset, depth):
+    """Builds decision tree recusively.
+
+    Args:
+        dataset (np.ndarray): Numpy array with shape (N, K+1). Includes K attributes and 1 label.
+        depth (int): Layers of decision tree to build
+
+    Returns:
+        Tuple: Returns a tuple of (feature, depth).
+            - feature (int): Feature that produced the maximum information gain.
+            - depth (float): Split upon feature.
+    """
+    # Terminating Condition
+    if np.all(dataset[:, -1] == dataset[:, -1][0]):
+        return Node(), depth
+    else:
+        # Split
+        attribute, split = find_split(dataset)
+        l_dataset, r_dataset = (
+            dataset[dataset[:, attribute] < split],
+            dataset[dataset[:, attribute] >= split],
+        )
+
+        # Create Node
+        left, l_depth = decision_tree_learning(l_dataset, depth + 1)
+        right, r_depth = decision_tree_learning(r_dataset, depth + 1)
+
+        return Node(left, right, attribute, split), max(l_depth, r_depth)
+
 
 ###
 # Main
 ###
 
-
 if __name__ == "__main__":
     # Parse
     path = "wifi_db/clean_dataset.txt"
-    x, y = read_dataset(path)
-    print(x[:5])
-    print(y[:5])
-    # Compute Split
-    feature, split = find_split(x, y)
-    print(feature)
-    print(split)
+    x, y, dataset = read_dataset(path)
+
+    # Build Tree
+    node, depth = decision_tree_learning(dataset, 1)
+    print(depth)
