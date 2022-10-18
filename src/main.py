@@ -26,20 +26,20 @@ def read_dataset(path):
     return np.array(x), np.array(y)
 
 
-def get_entropy(y):
+def get_entropy(labels, total):
     """Computes entropy given Y.
 
     Args:
-        y (np.ndarray): Numpy array of shape (N,). Represents class labels.
+        labels (dict): Dict containing 
 
     Returns:
         H (float): Returns information entropy given Y.
     """
     h = 0
-    labels = np.unique(y)
-    for label in labels:
-        pk = float(np.count_nonzero(y == label)) / len(y)
-        h -= pk * np.log2(pk)
+    for label, count in labels.items():
+        if count != 0:
+            pk = float(count) / total
+            h -= pk * np.log2(pk)
     return h
 
 
@@ -73,8 +73,14 @@ def find_split(x, y):
         # Find Overall Entropy
         h_all = get_entropy(y_sorted)
 
+        # Create Dicts
+        left, right = {}, {}
+
+        {label: np.count_nonzero(y == label) for label in np.unique(y)}
+
         # Find Optimal Split point For a Feature
         for idx, val in enumerate(x_sorted[:, i]):
+
             # Compute Gain
             s_left, s_right = y_sorted[:idx], y_sorted[idx:]
             h_left, h_right = get_entropy(s_left), get_entropy(s_right)
