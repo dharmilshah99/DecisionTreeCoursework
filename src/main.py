@@ -1,5 +1,19 @@
 import numpy as np
 
+
+###
+# Objects
+###
+
+
+class Node:
+    def __init__(self, left=None, right=None, attribute=None, value=None):
+        self.left = left
+        self.right = right
+        self.attribute = attribute
+        self.value = value
+
+
 ###
 # Helpers
 ###
@@ -47,7 +61,6 @@ def get_entropy(labels, total):
     return h
 
 
-# TODO: Verify this works
 def find_split(dataset):
     """Chooses value in X to split upon that results in the highest information gain.
 
@@ -111,19 +124,6 @@ def find_split(dataset):
     return (feature, split)
 
 
-###
-# Objects
-###
-
-
-class Node:
-    def __init__(self, left=None, right=None, attribute=None, value=None):
-        self.left = left
-        self.right = right
-        self.attribute = attribute
-        self.value = value
-
-
 def decision_tree_learning(dataset, depth):
     """Builds decision tree recusively.
 
@@ -142,10 +142,8 @@ def decision_tree_learning(dataset, depth):
     else:
         # Split
         attribute, split = find_split(dataset)
-        l_dataset, r_dataset = (
-            dataset[dataset[:, attribute] < split],
-            dataset[dataset[:, attribute] >= split],
-        )
+        l_dataset = dataset[dataset[:, attribute] < split]
+        r_dataset = dataset[dataset[:, attribute] >= split]
 
         # Create Node
         left, l_depth = decision_tree_learning(l_dataset, depth + 1)
