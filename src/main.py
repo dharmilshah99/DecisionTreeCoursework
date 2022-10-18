@@ -30,13 +30,14 @@ def get_entropy(labels, total):
     """Computes entropy given Y.
 
     Args:
-        labels (dict): Dict containing 
+        labels (dict): Dict containing counts for each label.
+        total (int): Total number of labels.
 
     Returns:
-        H (float): Returns information entropy given Y.
+        h (float): Returns information entropy given Y.
     """
     h = 0
-    for label, count in labels.items():
+    for count in labels.values():
         if count != 0:
             pk = float(count) / total
             h -= pk * np.log2(pk)
@@ -70,23 +71,27 @@ def find_split(x, y):
         p = np.argsort(x[:, i])
         x_sorted, y_sorted = x[p], y[p]
 
-        # Find Overall Entropy
-        h_all = get_entropy(y_sorted)
-
         # Create Dicts
-        left, right = {}, {}
+        left, right = {label: 0 for label in np.unique(
+            y)}, {label: np.count_nonzero(y == label) for label in np.unique(y)}
+        s_left = 0
+        s_right = total = sum(right.values())
 
-        {label: np.count_nonzero(y == label) for label in np.unique(y)}
+        # Find Overall Entropy
+        h_all = get_entropy(right, total)
 
         # Find Optimal Split point For a Feature
-        for idx, val in enumerate(x_sorted[:, i]):
+        for idx, val in enumerate(x_sorted[1:, i]):
 
+            # Update Dict
+            left[y_sorted[idx]] += 1
+            right[y_sorted[idx]] -= 1
+            s_left += 1
+            s_right -= 1
             # Compute Gain
-            s_left, s_right = y_sorted[:idx], y_sorted[idx:]
-            h_left, h_right = get_entropy(s_left), get_entropy(s_right)
-            remainder = (h_left * len(s_left) / (len(y_sorted))) + (
-                h_right * len(s_right) / (len(y_sorted))
-            )
+            h_left, h_right = get_entropy(
+                left, s_left), get_entropy(right, s_right)
+            remainder = (h_left * s_left / total) + (h_right * s_right / total)
             gain = h_all - remainder
 
             # Keep Track of Maximum Gain
@@ -97,10 +102,10 @@ def find_split(x, y):
 
     return (feature, split)
 
-
 ###
 # Main
 ###
+
 
 if __name__ == "__main__":
     path = "wifi_db/clean_dataset.txt"
