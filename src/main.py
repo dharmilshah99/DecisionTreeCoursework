@@ -1,5 +1,6 @@
+from re import A
 import numpy as np
-
+from numpy.random import default_rng
 
 ###
 # Objects
@@ -7,12 +8,12 @@ import numpy as np
 
 
 class Node:
-    def __init__(self, left=None, right=None, attribute=None, value=None):
+    def __init__(self, left=None, right=None, attribute=None, value=None, label=None):
         self.left = left
         self.right = right
         self.attribute = attribute
         self.value = value
-
+        self.label = label
 
 ###
 # Helpers
@@ -138,7 +139,7 @@ def decision_tree_learning(dataset, depth):
     """
     # Terminating Condition
     if np.all(dataset[:, -1] == dataset[:, -1][0]):
-        return Node(), depth
+        return Node(label=dataset[:, -1][0]), depth
     else:
         # Split
         attribute, split = find_split(dataset)
@@ -151,7 +152,72 @@ def decision_tree_learning(dataset, depth):
 
         return Node(left, right, attribute, split), max(l_depth, r_depth)
 
+# TODO: verify + complete documentation
+def predict(decision_tree, x):
+    """Performs prediction on some samples using a decision tree
 
+    Args:
+        decision_tree (Node): Decision tree 
+        x (np.ndarray): Instances, numpy array with shape (N,K)
+
+    Returns:
+        y (np.ndarray): Predicted class labels, numpy array with shape (N,)
+    """
+    y = np.zeros(len(x))
+    for idx, inst in enumerate(x):
+        # Traverse tree until leaf
+        curr_node = decision_tree
+        while curr_node.label == None:
+            # assert(inst[:, [curr_node.attribute]])
+            if inst[curr_node.attribute] < curr_node.value:
+                curr_node = curr_node.left
+            else:
+                curr_node = curr_node.right
+        y[idx] = curr_node.label
+    return y
+
+def split_dataset(dataset, test_proportion, random_generator=default_rng()):
+    """ Split dataset into training and test sets, according to the given 
+        test set proportion.
+    
+    Args:
+        dataset (np.ndarray): Instances, numpy array with shape (N,K)
+        x (np.ndarray): Instances, numpy array with shape (N,K)
+        y (np.ndarray): Class labels, numpy array with shape (N,)
+        test_proprotion (float): the desired proportion of test examples 
+                                 (0.0-1.0)
+        random_generator (np.random.Generator): A random generator
+
+    Returns:
+        tuple: returns a tuple of (x_train, x_test, y_train, y_test) 
+               - train_dataset (np.ndarray): Training dataset shape (N_train, K)
+               - test_dataset (np.ndarray): Test instances shape (N_test, K)
+    """
+
+    shuffled_indices = random_generator.permutation(len(dataset))
+    n_test = round(len(x) * test_proportion)
+    n_train = len(x) - n_test
+    train_dataset = dataset[shuffled_indices[:n_train]]
+    test_dataset = dataset[shuffled_indices[n_train:]]
+    return (train_dataset, test_dataset)
+
+def compute_accuracy(y_gold, y_prediction):
+    """ Compute the accuracy given the ground truth and predictions
+
+    Args:
+    y_gold (np.ndarray): the correct ground truth/gold standard labels
+    y_prediction (np.ndarray): the predicted labels
+
+    Returns:
+    float : the accuracy
+    """
+
+    assert len(y_gold) == len(y_prediction)  
+    
+    try:
+        return np.sum(y_gold == y_prediction) / len(y_gold)
+    except ZeroDivisionError:
+        return 0
 ###
 # Main
 ###
@@ -161,6 +227,21 @@ if __name__ == "__main__":
     path = "wifi_db/clean_dataset.txt"
     x, y, dataset = read_dataset(path)
 
+    seed = 60012
+    rg = default_rng(seed)
+    train_dataset, test_dataset = split_dataset(dataset, 
+                                                test_proportion=0.2, 
+                                                random_generator=rg)
+    print(train_dataset.shape)
+    print(test_dataset.shape)
+
     # Build Tree
-    node, depth = decision_tree_learning(dataset, 1)
+    node, depth = decision_tree_learning(train_dataset, 1)
     print(depth)
+
+    # Evaluate Accuracy
+    x_test = test_dataset[:, :-1]
+    y_test = test_dataset[:, -1]
+    tree_predictions = predict(node, x_test)
+    accuracy = compute_accuracy(y_test, tree_predictions)
+    print(accuracy)
