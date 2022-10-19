@@ -36,9 +36,9 @@ def read_dataset(path):
     for line in open(path):
         line = line.strip()
         if line:
-            row = line.split("\t")
+            row = line.split()
             x.append(list(map(float, row[:-1])))
-            y.append(int(row[-1]))
+            y.append(int(float(row[-1])))
     x = np.array(x)
     y = np.array(y)
     return x, y, np.column_stack((x, y))
@@ -224,7 +224,7 @@ def compute_accuracy(y_gold, y_prediction):
 
 if __name__ == "__main__":
     # Parse
-    path = "wifi_db/clean_dataset.txt"
+    path = "wifi_db/noisy_dataset.txt"
     x, y, dataset = read_dataset(path)
 
     seed = 60012
