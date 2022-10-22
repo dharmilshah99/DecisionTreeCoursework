@@ -24,3 +24,7 @@ class Node:
             True if Node has children. False, otherwise.
         """
         return (self.left == None) and (self.right == None)
+
+
+if __name__ == "__main__":
+    pass

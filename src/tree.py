@@ -109,5 +109,62 @@ def decision_tree_learning(dataset, depth):
 
         return node.Node(left, right, attribute, split), max(l_depth, r_depth)
 
+
+def save_plot_tree_image(node, depth, filename):
+    """Saves an image of the tree plot.
+
+    Args:
+        node (Node): Root node of the decision tree.
+        depth (int): Maximum depth of the decision tree.
+        filename (str): Filename to save image under the "images/" folder.
+    """
+    plt.figure(figsize=(128, 128), dpi=100)  # TODO: Check image size limits.
+    plot_tree(node, depth, 128)
+    plt.savefig("images/" + filename)
+
+
+def plot_tree(node, depth, width, x=0, y=0):
+    """Recursively Plots Decision Tree.
+
+    Args:
+        node (Node): Root node of the decision tree.
+        depth (int): Maximum depth of the decision tree.
+        width (int): Width of the image for the tree to be plotted on.
+        x (int, optional): X Coordinate to plot the root node.
+        y (int, optional): Y Coordinate to plot the leaf node.
+    """
+
+    if node.is_root():
+        # Plot Leaf
+        plt.text(
+            x,
+            y,
+            r"${}$".format(str(node.label)),
+            color="black",
+            bbox=dict(facecolor="white", edgecolor="green", boxstyle="round,pad=1"),
+        )
+        return
+    else:
+        # Plot Decision
+        text = f"X_{node.attribute} < {node.value}"
+        plt.text(
+            x,
+            y,
+            r"${}$".format(text),
+            color="black",
+            bbox=dict(facecolor="white", edgecolor="black", boxstyle="round,pad=1"),
+        )
+
+        # Plot Edges
+        y_l = y_r = y - 1
+        x_l, x_r = x - width / 2, x + width / 2
+        plt.plot([x_l, x, x_r], [y_l, y, y_r])
+
+        # Recurse
+        plot_tree(node.left, depth - 1, width / 2, x_l, y_l)
+        plot_tree(node.right, depth - 1, width / 2, x_r, y_r)
+        return
+
+
 if __name__ == "__main__":
     pass
