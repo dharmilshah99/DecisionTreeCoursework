@@ -1,39 +1,8 @@
 import numpy as np
 from numpy.random import default_rng
 from matplotlib import pyplot as plt
-
-###
-# Objects
-###
-
-
-class Node:
-    """Represents a Decision Tree Node."""
-
-    def __init__(self, left=None, right=None, attribute=None, value=None, label=None):
-        """Initializes Decision Tree Node.
-
-        Args:
-            left (Node, optional): Node left of current node. Defaults to None.
-            right (Node, optional): Node right of current node. Defaults to None.
-            attribute (int, optional): Attribute to split dataset upon. Defaults to None.
-            value (float, optional): Split point value. Defaults to None.
-            label (int, optional): Classification label of Node. Defaults to None.
-        """
-        self.left = left
-        self.right = right
-        self.attribute = attribute
-        self.value = value
-        self.label = label
-
-    def is_root(self):
-        """Checks if Node is a root.
-
-        Returns:
-            True if Node has children. False, otherwise.
-        """
-        return (self.left == None) and (self.right == None)
-
+import tree
+import eval
 
 ###
 # Helpers
@@ -145,57 +114,6 @@ def find_split(dataset):
     return (feature, split)
 
 
-def decision_tree_learning(dataset, depth):
-    """Builds decision tree recusively.
-
-    Args:
-        dataset (np.ndarray): Numpy array with shape (N, K+1). Includes K attributes and 1 label.
-        depth (int): Layers of decision tree to build
-
-    Returns:
-        Tuple: Returns a tuple of (feature, depth).
-            - feature (int): Feature that produced the maximum information gain.
-            - depth (float): Split upon feature.
-    """
-    # Terminating Condition
-    if np.all(dataset[:, -1] == dataset[:, -1][0]):
-        return Node(label=dataset[:, -1][0]), depth
-    else:
-        # Split
-        attribute, split = find_split(dataset)
-        l_dataset = dataset[dataset[:, attribute] < split]
-        r_dataset = dataset[dataset[:, attribute] >= split]
-
-        # Create Node
-        left, l_depth = decision_tree_learning(l_dataset, depth + 1)
-        right, r_depth = decision_tree_learning(r_dataset, depth + 1)
-
-        return Node(left, right, attribute, split), max(l_depth, r_depth)
-
-
-def predict(decision_tree, x):
-    """Performs prediction on some samples using a decision tree.
-
-    Args:
-        decision_tree (Node): Decision tree.
-        x (np.ndarray): Instances, numpy array with shape (N,K).
-
-    Returns:
-        y (np.ndarray): Predicted class labels, numpy array with shape (N,).
-    """
-    y = np.zeros(len(x))
-    for idx, inst in enumerate(x):
-        # Traverse tree until leaf
-        curr_node = decision_tree
-        while not curr_node.is_root():
-            if inst[curr_node.attribute] < curr_node.value:
-                curr_node = curr_node.left
-            else:
-                curr_node = curr_node.right
-        y[idx] = curr_node.label
-    return y
-
-
 def split_dataset(dataset, test_proportion, random_generator=default_rng()):
     """ Split dataset into training and test sets, according to the given test set proportion.
 
@@ -216,25 +134,6 @@ def split_dataset(dataset, test_proportion, random_generator=default_rng()):
     train_dataset = dataset[shuffled_indices[:n_train]]
     test_dataset = dataset[shuffled_indices[n_train:]]
     return (train_dataset, test_dataset)
-
-
-def compute_accuracy(y_gold, y_prediction):
-    """Compute the accuracy given the ground truth and predictions.
-
-    Args:
-        y_gold (np.ndarray): the correct ground truth/gold standard labels.
-        y_prediction (np.ndarray): the predicted labels.
-
-    Returns:
-        float : the accuracy.
-    """
-
-    assert len(y_gold) == len(y_prediction)
-
-    try:
-        return np.sum(y_gold == y_prediction) / len(y_gold)
-    except ZeroDivisionError:
-        return 0
 
 
 def plot_tree(node, depth, width, x=0, y=0):
@@ -312,14 +211,14 @@ if __name__ == "__main__":
     print(test_dataset.shape)
 
     # Build Tree
-    node, depth = decision_tree_learning(train_dataset, 1)
+    node, depth = tree.decision_tree_learning(train_dataset, 1)
     print(depth)
 
     # Evaluate Accuracy
     x_test = test_dataset[:, :-1]
     y_test = test_dataset[:, -1]
-    tree_predictions = predict(node, x_test)
-    accuracy = compute_accuracy(y_test, tree_predictions)
+    tree_predictions = eval.predict(node, x_test)
+    accuracy = eval.compute_accuracy(y_test, tree_predictions)
     print(accuracy)
 
     # Save Tree
