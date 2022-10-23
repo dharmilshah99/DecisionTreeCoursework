@@ -19,8 +19,7 @@ class DecisionTree:
         self.accuracy = accuracy
         
 
-def parsing(d_tree: DecisionTree):
-    path = "wifi_db/clean_dataset.txt"
+def parsing(d_tree: DecisionTree, path):
     x, y, dataset = parse.read_dataset(path)
 
     seed = 60012
@@ -57,7 +56,8 @@ def cli():
 @cli.command()
 def run_everything():
     d_tree = DecisionTree()
-    parsing(d_tree)
+    path = "wifi_db/clean_dataset.txt"
+    parsing(d_tree, path)
     build_tree(d_tree)
     eval_accuracy(d_tree)
     save_tree(d_tree)
