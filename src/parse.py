@@ -1,5 +1,5 @@
 from numpy.random import default_rng
-
+import numpy as np
 
 def read_dataset(path):
     """Reads dataset from specified path.
@@ -40,8 +40,8 @@ def split_dataset(dataset, test_proportion, random_generator=default_rng()):
     """
 
     shuffled_indices = random_generator.permutation(len(dataset))
-    n_test = round(len(x) * test_proportion)
-    n_train = len(x) - n_test
+    n_test = round(len(dataset) * test_proportion)
+    n_train = len(dataset) - n_test
     train_dataset = dataset[shuffled_indices[:n_train]]
     test_dataset = dataset[shuffled_indices[n_train:]]
     return (train_dataset, test_dataset)
