@@ -39,11 +39,11 @@ def generate_confusion_matrix(y_gold, y_prediction):
     assert len(y_gold) == len(y_prediction)
 
     # Match labels to confusion matrix indexes.
-    y_gold, y_prediction = y_gold - 1, y_prediction - 1
+    y_gold_idx, y_prediction_idx = y_gold - 1, y_prediction - 1
 
     # Populate Confusion Matrix
     confusion_matrix = np.zeros((4, 4), dtype=np.int32)  # Number of rooms is 4.
-    for gold, prediction in zip(y_gold, y_prediction):
+    for gold, prediction in zip(y_gold_idx, y_prediction_idx):
         confusion_matrix[gold][prediction] += 1
 
     return confusion_matrix
