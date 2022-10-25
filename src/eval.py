@@ -138,20 +138,16 @@ def compute_f1_score(y_gold, y_prediction):
 
     (precisions, macro_p) = compute_precision(y_gold, y_prediction)
     (recalls, macro_r) = compute_recall(y_gold, y_prediction)
-    
     precisions = np.array(precisions)
     recalls = np.array(recalls)
-    # just to make sure they are of the same length
+
+    # Just to make sure they are of the same length
     assert len(precisions) == len(recalls)
-
-    f = np.zeros((len(precisions), ))
-    
+    f = np.zeros((len(precisions), )) 
     f = (2*precisions * recalls / (precisions +recalls))
-
     macro_f = 0
     if len(f) > 0:
         macro_f = np.mean(f)
-    
     return (f, macro_f)
 
 if __name__ == "__main__":
