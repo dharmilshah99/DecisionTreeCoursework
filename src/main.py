@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 import tree
 import parse
 import eval
-import click 
 
 ###
 # Main
@@ -48,12 +47,6 @@ def save_tree(d_tree: DecisionTree):
     tree.save_plot_tree_image(d_tree.node, d_tree.depth, "tree.png")
 
 
-@click.group()
-def cli():
-    pass
-
-
-@cli.command()
 def run_everything():
     d_tree = DecisionTree()
     path = "wifi_db/clean_dataset.txt"
@@ -62,8 +55,6 @@ def run_everything():
     eval_accuracy(d_tree)
     save_tree(d_tree)
 
-
-@cli.command()
 def parse_and_build():
     d_tree = DecisionTree()
     parsing(d_tree)
@@ -71,4 +62,4 @@ def parse_and_build():
 
 
 if __name__ == "__main__":
-    cli()
+    run_everything()
