@@ -64,6 +64,95 @@ def compute_accuracy(confusion_matrix):
     except ZeroDivisionError:
         return 0
 
+def compute_precision(confusion_matrix):
+    """ Compute the precision score per class given the ground truth and predictions
+        
+    Also return the macro-averaged precision across classes.
+        
+    Args:
+        y_gold (np.ndarray): the correct ground truth/gold standard labels
+        y_prediction (np.ndarray): the predicted labels
+
+    Returns:
+        tuple: returns a tuple (precisions, macro_precision) where
+            - precisions is a np.ndarray of shape (C,), where each element is the 
+              precision for class c
+            - macro-precision is macro-averaged precision (a float) 
+    """
+    p = np.zeros((len(confusion_matrix), ))
+    
+    for i in range(len(confusion_matrix)):
+        if np.sum(confusion_matrix[:, i]) > 0:
+            p = confusion_matrix[i][i]/np.sum(confusion_matrix[:, i])
+    
+    # Compute the macro-averaged precision
+    macro_p = 0
+    if len(p) > 0:
+        macro_p = np.mean(p)
+    return (p, macro_p)
+
+
+def compute_recall(confusion_matrix):
+    """ Compute the recall score per class given the ground truth and predictions
+        
+    Also return the macro-averaged recall across classes.
+        
+    Args:
+        y_gold (np.ndarray): the correct ground truth/gold standard labels
+        y_prediction (np.ndarray): the predicted labels
+
+    Returns:
+        tuple: returns a tuple (recalls, macro_recall) where
+            - recalls is a np.ndarray of shape (C,), where each element is the 
+                recall for class c
+            - macro-recall is macro-averaged recall (a float) 
+    """
+    r = np.zeros((len(confusion_matrix), ))
+    
+    for i in range(len(confusion_matrix)):
+        if np.sum(confusion_matrix[i, :]) > 0:
+            r = confusion_matrix[i][i]/np.sum(confusion_matrix[i,: ])
+    
+    # Compute the macro-averaged precision
+    macro_r = 0
+    if len(r) > 0:
+        macro_r = np.mean(r)
+    return (r, macro_r)
+
+
+def compute_f1_score(y_gold, y_prediction):
+    """ Compute the F1-score per class given the ground truth and predictions
+        
+    Also return the macro-averaged F1-score across classes.
+        
+    Args:
+        y_gold (np.ndarray): the correct ground truth/gold standard labels
+        y_prediction (np.ndarray): the predicted labels
+
+    Returns:
+        tuple: returns a tuple (f1s, macro_f1) where
+            - f1s is a np.ndarray of shape (C,), where each element is the 
+              f1-score for class c
+            - macro-f1 is macro-averaged f1-score (a float) 
+    """
+
+    (precisions, macro_p) = compute_precision(y_gold, y_prediction)
+    (recalls, macro_r) = compute_recall(y_gold, y_prediction)
+    
+    precisions = np.array(precisions)
+    recalls = np.array(recalls)
+    # just to make sure they are of the same length
+    assert len(precisions) == len(recalls)
+
+    f = np.zeros((len(precisions), ))
+    
+    f = (2*precisions * recalls / (precisions +recalls))
+
+    macro_f = 0
+    if len(f) > 0:
+        macro_f = np.mean(f)
+    
+    return (f, macro_f)
 
 if __name__ == "__main__":
     pass
