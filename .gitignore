@@ -1,1 +1,5 @@
 images/**
+
+# virtual environment
+venv/
+src/__pycache__
