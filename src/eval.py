@@ -83,8 +83,9 @@ def compute_precision(confusion_matrix):
     p = np.zeros((len(confusion_matrix),))
 
     for i in range(len(confusion_matrix)):
-        if np.sum(confusion_matrix[:, i]) > 0:
-            p = confusion_matrix[i][i] / np.sum(confusion_matrix[:, i])
+        total = np.sum(confusion_matrix[:, i])
+        if total > 0:
+            p = confusion_matrix[i][i] / total
 
     # Compute the macro-averaged precision
     macro_p = 0
@@ -111,8 +112,9 @@ def compute_recall(confusion_matrix):
     r = np.zeros((len(confusion_matrix),))
 
     for i in range(len(confusion_matrix)):
-        if np.sum(confusion_matrix[i, :]) > 0:
-            r = confusion_matrix[i][i] / np.sum(confusion_matrix[i, :])
+        total = np.sum(confusion_matrix[i, :])
+        if total > 0:
+            r = confusion_matrix[i][i] / total
 
     # Compute the macro-averaged recall
     macro_r = 0
@@ -139,8 +141,6 @@ def compute_f1_score(y_gold, y_prediction):
 
     (precisions, macro_p) = compute_precision(y_gold, y_prediction)
     (recalls, macro_r) = compute_recall(y_gold, y_prediction)
-    precisions = np.array(precisions)
-    recalls = np.array(recalls)
 
     # Just to make sure they are of the same length
     assert len(precisions) == len(recalls)
