@@ -1,6 +1,7 @@
 import numpy as np
 import node
 
+
 def predict(decision_tree, x):
     """Performs prediction on some samples using a decision tree.
 
@@ -24,25 +25,6 @@ def predict(decision_tree, x):
     return y
 
 
-
-def compute_accuracy(y_gold, y_prediction):
-    """Compute the accuracy given the ground truth and predictions.
-
-    Args:
-        y_gold (np.ndarray): Ground truth/Gold standard labels.
-        y_prediction (np.ndarray): Predicted labels.
-
-    Returns:
-        float: the accuracy.
-    """
-
-    assert len(y_gold) == len(y_prediction)
-
-    try:
-        return np.sum(y_gold == y_prediction) / len(y_gold)
-    except ZeroDivisionError:
-        return 0
-
 def generate_confusion_matrix(y_gold, y_prediction):
     """Generates a confusion matrix given ground truth and predictions
 
@@ -58,13 +40,30 @@ def generate_confusion_matrix(y_gold, y_prediction):
 
     # Match labels to confusion matrix indexes.
     y_gold, y_prediction = y_gold - 1, y_prediction - 1
-    
+
     # Populate Confusion Matrix
-    confusion_matrix = np.zeros((4, 4), dtype=np.int32) # Number of rooms is 4.
+    confusion_matrix = np.zeros((4, 4), dtype=np.int32)  # Number of rooms is 4.
     for gold, prediction in zip(y_gold, y_prediction):
         confusion_matrix[gold][prediction] += 1
 
     return confusion_matrix
+
+
+def compute_accuracy(confusion_matrix):
+    """Compute the accuracy given a confusion matrix.
+
+    Args:
+        conufusion_matrix (np.ndarray): A 4 by 4 confusion matrix.
+
+    Returns:
+        float: Accuracy.
+    """
+
+    try:
+        return np.trace(confusion_matrix) / confusion_matrix.sum()
+    except ZeroDivisionError:
+        return 0
+
 
 if __name__ == "__main__":
     pass
