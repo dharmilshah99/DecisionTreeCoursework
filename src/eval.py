@@ -1,5 +1,7 @@
 import numpy as np
-import node
+from numpy.random import default_rng
+
+import tree
 
 
 def predict(decision_tree, x):
@@ -152,6 +154,45 @@ def compute_f1_score(y_gold, y_prediction):
     if len(f) > 0:
         macro_f = np.mean(f)
     return (f, macro_f)
+
+
+def perform_k_fold_cross_validation(
+    dataset, n_splits=10, random_generator=default_rng()
+):
+    """Performs K-Fold Cross Validation
+
+    Args:
+        dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
+        n_splits (int): Number of splits. Defaults to 10.
+        random_generator (np.random.Generator): A numpy random generator.
+    
+    Returns:
+        Average Confusion Matrix (np.array): Average 4 by 4 confusion matrix over all folds.
+    """
+
+    # Shuffle and Split Dataset
+    shuffle = random_generator.permutation(len(dataset))
+    dataset = dataset[shuffle]
+    dataset_splits = np.array_split(dataset, n_splits)
+
+    # Run K-Fold Cross Validation
+    confusion_matrices = []
+    for i in range(n_splits):
+        # Split
+        test_dataset = dataset_splits[i]
+        train_dataset = np.hstack(dataset_splits[:i] + dataset_splits[i + 1 :])
+
+        # Train
+        tree, _ = tree.decision_tree_learning(train_dataset)
+
+        # Evaluate
+        y_gold, y_prediction = test_dataset[:, -1], predict(tree, test_dataset[:, :-1])
+        confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
+        confusion_matrices.append(confusion_matrix)
+
+    confusion_matrices = np.asarray(confusion_matrices)
+
+    return np.mean(confusion_matrices, axis=0)
 
 
 if __name__ == "__main__":
