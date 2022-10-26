@@ -2,6 +2,7 @@ import numpy as np
 import node
 from matplotlib import pyplot as plt
 
+
 def get_entropy(labels, total):
     """Computes entropy given a dictionary containing counts for each label and the total number of all labels.
 
