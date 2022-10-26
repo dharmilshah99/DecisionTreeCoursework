@@ -188,8 +188,7 @@ def perform_k_fold_cross_validation(
 
         # Evaluate
         y_gold, y_prediction = test_dataset[:, -1], predict(tree, test_dataset[:, :-1])
-        confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
-        confusion_matrices[i] = confusion_matrix
+        confusion_matrices[i] = generate_confusion_matrix(y_gold, y_prediction)
 
     return np.mean(confusion_matrices, axis=0)
 
