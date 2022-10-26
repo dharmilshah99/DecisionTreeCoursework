@@ -1,6 +1,7 @@
 from numpy.random import default_rng
 import numpy as np
 
+
 def read_dataset(path):
     """Reads dataset from specified path.
 

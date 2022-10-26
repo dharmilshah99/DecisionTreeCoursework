@@ -37,7 +37,6 @@ def generate_confusion_matrix(y_gold, y_prediction):
     Returns:
         confusion_matrix (np.ndarray): A 4 by 4 confusion matrix.
     """
-
     assert len(y_gold) == len(y_prediction)
 
     # Match labels to confusion matrix indexes.
@@ -47,7 +46,7 @@ def generate_confusion_matrix(y_gold, y_prediction):
     # Number of rooms is 4.
     confusion_matrix = np.zeros((4, 4), dtype=np.int32)
     for gold, prediction in zip(y_gold_idx, y_prediction_idx):
-        confusion_matrix[gold][prediction] += 1
+        confusion_matrix[int(gold)][int(prediction)] += 1
 
     return confusion_matrix
 
@@ -74,8 +73,7 @@ def compute_precision(confusion_matrix):
     Also return the macro-averaged precision across classes.
 
     Args:
-        y_gold (np.ndarray): the correct ground truth/gold standard labels
-        y_prediction (np.ndarray): the predicted labels
+        conufusion_matrix (np.ndarray): A 4 by 4 confusion matrix.
 
     Returns:
         tuple: returns a tuple (precisions, macro_precision) where
@@ -88,7 +86,7 @@ def compute_precision(confusion_matrix):
     for i in range(len(confusion_matrix)):
         total = np.sum(confusion_matrix[:, i])
         if total > 0:
-            p = confusion_matrix[i][i] / total
+            p[i] = confusion_matrix[i][i] / total
 
     # Compute the macro-averaged precision
     macro_p = 0
@@ -103,8 +101,7 @@ def compute_recall(confusion_matrix):
     Also return the macro-averaged recall across classes.
 
     Args:
-        y_gold (np.ndarray): the correct ground truth/gold standard labels
-        y_prediction (np.ndarray): the predicted labels
+        conufusion_matrix (np.ndarray): A 4 by 4 confusion matrix.
 
     Returns:
         tuple: returns a tuple (recalls, macro_recall) where
@@ -117,7 +114,7 @@ def compute_recall(confusion_matrix):
     for i in range(len(confusion_matrix)):
         total = np.sum(confusion_matrix[i, :])
         if total > 0:
-            r = confusion_matrix[i][i] / total
+            r[i] = confusion_matrix[i][i] / total
 
     # Compute the macro-averaged recall
     macro_r = 0
@@ -126,14 +123,13 @@ def compute_recall(confusion_matrix):
     return (r, macro_r)
 
 
-def compute_f1_score(y_gold, y_prediction):
+def compute_f1_score(confusion_matrix):
     """Compute the F1-score per class given the ground truth and predictions
 
     Also return the macro-averaged F1-score across classes.
 
     Args:
-        y_gold (np.ndarray): the correct ground truth/gold standard labels
-        y_prediction (np.ndarray): the predicted labels
+        conufusion_matrix (np.ndarray): A 4 by 4 confusion matrix.
 
     Returns:
         tuple: returns a tuple (f1s, macro_f1) where
@@ -142,8 +138,8 @@ def compute_f1_score(y_gold, y_prediction):
             - macro-f1 is macro-averaged f1-score (a float)
     """
 
-    (precisions, macro_p) = compute_precision(y_gold, y_prediction)
-    (recalls, macro_r) = compute_recall(y_gold, y_prediction)
+    (precisions, _) = compute_precision(confusion_matrix)
+    (recalls, _) = compute_recall(confusion_matrix)
 
     # Just to make sure they are of the same length
     assert len(precisions) == len(recalls)
@@ -181,16 +177,43 @@ def perform_k_fold_cross_validation(
     for i in range(n_splits):
         # Split
         test_dataset = dataset_splits[i]
-        train_dataset = np.hstack(dataset_splits[:i] + dataset_splits[i + 1 :])
+        train_dataset = np.vstack(dataset_splits[:i] + dataset_splits[i + 1 :])
 
         # Train
-        tree, _ = tree.decision_tree_learning(train_dataset)
+        dtree, _ = tree.decision_tree_learning(train_dataset, 1)
 
         # Evaluate
-        y_gold, y_prediction = test_dataset[:, -1], predict(tree, test_dataset[:, :-1])
+        y_gold, y_prediction = test_dataset[:, -1], predict(dtree, test_dataset[:, :-1])
         confusion_matrices[i] = generate_confusion_matrix(y_gold, y_prediction)
 
     return np.mean(confusion_matrices, axis=0)
+
+
+def report_evaluation_metrics(dataset, n_splits=10):
+    """Reports accuracy, precision and recall rates per class, and F1 measures.
+    
+    Args:
+        dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
+        n_splits (int): Number of splits. Defaults to 10.
+    """
+
+    avg_confusion_matrix = perform_k_fold_cross_validation(dataset, n_splits)
+    print(f"Average Confusion Matrix over {n_splits} folds:\n {avg_confusion_matrix}\n")
+
+    avg_accuracy = compute_accuracy(avg_confusion_matrix)
+    print(f"Average Overall Accuracy: {avg_accuracy}\n")
+
+    class_precisions, macro_precision = compute_precision(avg_confusion_matrix)
+    print(f"Precision per Class: {class_precisions}")
+    print(f"Macro Precision: {macro_precision}\n")
+
+    class_recalls, macro_recall = compute_recall(avg_confusion_matrix)
+    print(f"Recalls per Class: {class_recalls}")
+    print(f"Macro Recall: {macro_recall}\n")
+
+    class_f_score, macro_f = compute_f1_score(avg_confusion_matrix)
+    print(f"F1-Score per Class: {class_f_score}")
+    print(f"Macro F1-Score: {macro_f}\n")
 
 
 if __name__ == "__main__":

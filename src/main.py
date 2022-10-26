@@ -9,18 +9,25 @@ import eval
 # Main
 ###
 
+
 class DecisionTree:
-    def __init__(self,train_dataset= None, test_dataset= None, node = None, depth = None, accuracy = None):
+    def __init__(
+        self,
+        train_dataset=None,
+        test_dataset=None,
+        node=None,
+        depth=None,
+        accuracy=None,
+    ):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
         self.node = node
         self.depth = depth
         self.accuracy = accuracy
-        
+
 
 def parsing(d_tree: DecisionTree, path):
     x, y, dataset = parse.read_dataset(path)
-
     seed = 60012
     rg = default_rng(seed)
     d_tree.train_dataset, d_tree.test_dataset = parse.split_dataset(
@@ -55,6 +62,14 @@ def run_everything():
     eval_accuracy(d_tree)
     save_tree(d_tree)
 
+
+def run_report():
+    path = "wifi_db/clean_dataset.txt"
+    _, _, dataset = parse.read_dataset(path)
+    eval.report_evaluation_metrics(dataset, 10)
+    pass
+
+
 def parse_and_build():
     d_tree = DecisionTree()
     parsing(d_tree)
@@ -62,4 +77,5 @@ def parse_and_build():
 
 
 if __name__ == "__main__":
-    run_everything()
+    # run_everything()
+    run_report()
