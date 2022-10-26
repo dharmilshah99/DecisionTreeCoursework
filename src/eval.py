@@ -44,7 +44,8 @@ def generate_confusion_matrix(y_gold, y_prediction):
     y_gold_idx, y_prediction_idx = y_gold - 1, y_prediction - 1
 
     # Populate Confusion Matrix
-    confusion_matrix = np.zeros((4, 4), dtype=np.int32)  # Number of rooms is 4.
+    # Number of rooms is 4.
+    confusion_matrix = np.zeros((4, 4), dtype=np.int32)
     for gold, prediction in zip(y_gold_idx, y_prediction_idx):
         confusion_matrix[gold][prediction] += 1
 
@@ -165,7 +166,7 @@ def perform_k_fold_cross_validation(
         dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
         n_splits (int): Number of splits. Defaults to 10.
         random_generator (np.random.Generator): A numpy random generator.
-    
+
     Returns:
         Average Confusion Matrix (np.array): Average 4 by 4 confusion matrix over all folds.
     """
@@ -176,7 +177,7 @@ def perform_k_fold_cross_validation(
     dataset_splits = np.array_split(dataset, n_splits)
 
     # Run K-Fold Cross Validation
-    confusion_matrices = []
+    confusion_matrices = np.zeros((n_splits, 4, 4))  # Number of rooms is 4.
     for i in range(n_splits):
         # Split
         test_dataset = dataset_splits[i]
@@ -188,9 +189,7 @@ def perform_k_fold_cross_validation(
         # Evaluate
         y_gold, y_prediction = test_dataset[:, -1], predict(tree, test_dataset[:, :-1])
         confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
-        confusion_matrices.append(confusion_matrix)
-
-    confusion_matrices = np.asarray(confusion_matrices)
+        confusion_matrices[i] = confusion_matrix
 
     return np.mean(confusion_matrices, axis=0)
 
