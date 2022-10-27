@@ -33,11 +33,12 @@ class Node:
             True if Node has children. False, otherwise.
         """
         return (self.left == None) and (self.right == None)
-    
+
     def node_count(self):
         if self.is_leaf():
             return 1
         return self.left.node_count() + self.right.node_count()
+
 
 if __name__ == "__main__":
     pass

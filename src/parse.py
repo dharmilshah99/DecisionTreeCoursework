@@ -27,7 +27,7 @@ def read_dataset(path):
 
 
 def split_dataset(dataset, test_proportion, random_generator=default_rng()):
-    """ Split dataset into training and test sets, according to the given test set proportion.
+    """Split dataset into training and test sets, according to the given test set proportion.
 
     Args:
         dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
@@ -35,7 +35,7 @@ def split_dataset(dataset, test_proportion, random_generator=default_rng()):
         random_generator (np.random.Generator): A random generator
 
     Returns:
-        tuple: returns a tuple of (train_dataset, test_dataset) 
+        tuple: returns a tuple of (train_dataset, test_dataset)
             - train_dataset (np.ndarray): Training dataset shape (N_train, K+1)
             - test_dataset (np.ndarray): Test instances shape (N_test, K+1)
     """
