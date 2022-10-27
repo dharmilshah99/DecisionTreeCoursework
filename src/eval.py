@@ -3,7 +3,6 @@ from numpy.random import default_rng
 
 import tree
 
-
 def predict(decision_tree, x):
     """Performs prediction on some samples using a decision tree.
 
@@ -269,6 +268,8 @@ def perform_nested_k_fold_cross_validation(
             # Train & Prune
             dtree, depth = tree.decision_tree_learning(train_dataset, 1)
             tree.prune_tree(validation_dataset, dtree)
+            pruned_depth = dtree.get_depth()
+            assert(pruned_depth <= depth)
 
             # Evaluate
             y_gold = test_dataset[:, -1]
@@ -281,7 +282,7 @@ def perform_nested_k_fold_cross_validation(
             if compute_accuracy(confusion_matrix) > best_accuracy:
                 best_confusion_matrix = confusion_matrix
                 best_accuracy = accuracy
-                best_depth = depth
+                best_depth = pruned_depth
 
         # Keep Track of Confusion Matrices
         confusion_matrices[i] = best_confusion_matrix
@@ -299,8 +300,8 @@ def report_evaluation_metrics(confusion_matrix, avg_depth, n_splits=10):
         n_splits (int): Number of splits. Defaults to 10.
     """
 
-    print(f"Average Confusion Matrix over {n_splits} folds:\n {confusion_matrix}\n")
     print(f"Average Tree Depth:\n {avg_depth}\n")
+    print(f"Average Confusion Matrix over {n_splits} folds:\n {confusion_matrix}\n")
 
     avg_accuracy = compute_accuracy(confusion_matrix)
     print(f"Average Overall Accuracy: {avg_accuracy}\n")

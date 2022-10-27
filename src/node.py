@@ -16,7 +16,6 @@ class Node:
         self.attribute = attribute
         self.value = value
         self.label = label
-        self.pruned = False
 
     def make_leaf(self, label):
         self.left = None
@@ -24,7 +23,6 @@ class Node:
         self.attribute = None
         self.value = None
         self.label = label
-        self.pruned = False
 
     def is_leaf(self):
         """Checks if Node is a root.
@@ -39,6 +37,10 @@ class Node:
             return 1
         return self.left.node_count() + self.right.node_count()
 
+    def get_depth(self):
+        if self.is_leaf():
+            return 1
+        return max(self.left.get_depth(), self.right.get_depth()) + 1
 
 if __name__ == "__main__":
     pass

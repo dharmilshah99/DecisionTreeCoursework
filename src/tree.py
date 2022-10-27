@@ -95,7 +95,7 @@ def decision_tree_learning(dataset, depth=1):
 
     Returns:
         Tuple: Returns a tuple of (feature, depth).
-            - feature (int): Feature that produced the maximum information gain.
+            - root (Node): The root node of the built decision tree
             - depth (int): Depth of decision tree built.
     """
     # Terminating Condition
@@ -171,18 +171,15 @@ def plot_tree(node, depth, width, x=0, y=0):
 
 
 def prune_tree(dataset, root):
-    """Prunes tree to improve accuracy
+    """Prunes tree to improve accuracy (modifies tree in place)
 
     Args:
         dataset (np.ndarray):
         root (Node):
 
     Returns:
-        None: modifies root in place
+        None: modifies root in place 
     """
-
-    # Set Pruned
-    root.pruned = True
 
     # Terminating Conditions
     if root.is_leaf() or (len(dataset) == 0):

@@ -29,10 +29,7 @@ def pefrorm_evaluation(path):
 
     # Evaluate
     confusion_matrix, avg_depth = eval.perform_k_fold_cross_validation(dataset, 10)
-    (
-        pruned_confusion_matrix,
-        pruned_avg_depth,
-    ) = eval.perform_nested_k_fold_cross_validation(dataset, 10)
+    pruned_confusion_matrix, pruned_avg_depth = eval.perform_nested_k_fold_cross_validation(dataset, 10)
 
     # Print Metrics
     print("### Unpruned Tree Metrics ###")
@@ -56,7 +53,9 @@ def save_tree():
 if __name__ == "__main__":
 
     # Perform Evaluation
+    print("Clean Dataset Results:")
     pefrorm_evaluation(CLEAN_DATASET_PATH)
+    print("Noisy Dataset Results:")
     pefrorm_evaluation(NOISY_DATASET_PATH)
 
     # Plot Tree
