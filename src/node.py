@@ -16,14 +16,28 @@ class Node:
         self.attribute = attribute
         self.value = value
         self.label = label
+        self.pruned = False
 
-    def is_root(self):
+    def make_leaf(self, label):
+        self.left = None
+        self.right = None
+        self.attribute = None
+        self.value = None
+        self.label = label
+        self.pruned = False
+
+    def is_leaf(self):
         """Checks if Node is a root.
 
         Returns:
             True if Node has children. False, otherwise.
         """
         return (self.left == None) and (self.right == None)
+
+    def node_count(self):
+        if self.is_leaf():
+            return 1
+        return self.left.node_count() + self.right.node_count()
 
 
 if __name__ == "__main__":

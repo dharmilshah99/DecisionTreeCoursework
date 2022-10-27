@@ -1,6 +1,8 @@
 import numpy as np
-import node
 from matplotlib import pyplot as plt
+
+import node
+import eval
 
 
 def get_entropy(labels, total):
@@ -84,17 +86,17 @@ def find_split(dataset):
     return (feature, split)
 
 
-def decision_tree_learning(dataset, depth):
+def decision_tree_learning(dataset, depth=1):
     """Builds decision tree recusively.
 
     Args:
         dataset (np.ndarray): Numpy array with shape (N, K+1). Includes K attributes and 1 label.
-        depth (int): Layers of decision tree to build
+        depth (int): Layers of decision tree to build. Defaults to 1.
 
     Returns:
         Tuple: Returns a tuple of (feature, depth).
             - feature (int): Feature that produced the maximum information gain.
-            - depth (float): Split upon feature.
+            - depth (int): Depth of decision tree built.
     """
     # Terminating Condition
     if np.all(dataset[:, -1] == dataset[:, -1][0]):
@@ -136,7 +138,7 @@ def plot_tree(node, depth, width, x=0, y=0):
         y (int, optional): Y Coordinate to plot the leaf node.
     """
 
-    if node.is_root():
+    if node.is_leaf():
         # Plot Leaf
         plt.text(
             x,
@@ -166,6 +168,46 @@ def plot_tree(node, depth, width, x=0, y=0):
         plot_tree(node.left, depth - 1, width / 2, x_l, y_l)
         plot_tree(node.right, depth - 1, width / 2, x_r, y_r)
         return
+
+
+def prune_tree(dataset, root):
+    """Prunes tree to improve accuracy
+
+    Args:
+        dataset (np.ndarray):
+        root (Node):
+
+    Returns:
+        None: modifies root in place
+    """
+
+    # Set Pruned
+    root.pruned = True
+
+    # Terminating Conditions
+    if root.is_leaf() or (len(dataset) == 0):
+        return
+
+    # Recurse
+    prune_tree(dataset[dataset[:, root.attribute] < root.value], root.left)
+    prune_tree(dataset[dataset[:, root.attribute] >= root.value], root.right)
+
+    # Check Accuracy
+    if root.left.is_leaf() and root.right.is_leaf():
+
+        # Compute Accuracy
+        y_gold, y_prediction = dataset[:, -1], eval.predict(root, dataset[:, :-1])
+        accuracy = eval.compute_accuracy_arrays(y_gold, y_prediction)
+
+        # Get Majority Placement
+        values, counts = np.unique(dataset[:, -1], return_counts=True)
+        majority_label, majority_count = values[np.argmax(counts)], np.amax(counts)
+
+        # Prune
+        if accuracy <= (majority_count / len(dataset)):
+            root.make_leaf(majority_label)
+
+    return
 
 
 if __name__ == "__main__":

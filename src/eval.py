@@ -18,7 +18,7 @@ def predict(decision_tree, x):
     for idx, inst in enumerate(x):
         # Traverse tree until leaf
         curr_node = decision_tree
-        while not curr_node.is_root():
+        while not curr_node.is_leaf():
             if inst[curr_node.attribute] < curr_node.value:
                 curr_node = curr_node.left
             else:
@@ -49,6 +49,25 @@ def generate_confusion_matrix(y_gold, y_prediction):
         confusion_matrix[int(gold)][int(prediction)] += 1
 
     return confusion_matrix
+
+
+def compute_accuracy_arrays(y_gold, y_prediction):
+    """Compute the accuracy given the ground truth and predictions
+
+    Args:
+    y_gold (np.ndarray): the correct ground truth/gold standard labels
+    y_prediction (np.ndarray): the predicted labels
+
+    Returns:
+        float : the accuracy
+    """
+
+    assert len(y_gold) == len(y_prediction)
+
+    try:
+        return np.sum(y_gold == y_prediction) / len(y_gold)
+    except ZeroDivisionError:
+        return 0
 
 
 def compute_accuracy(confusion_matrix):
@@ -153,6 +172,26 @@ def compute_f1_score(confusion_matrix):
     return (f, macro_f)
 
 
+def k_fold_split(n_splits, dataset, random_generator=default_rng()):
+    """Split dataset into n mutually exclusive splits at random.
+
+    Args:
+        n_splits (int): Number of splits
+        dataset (int): The dataset to split up
+        random_generator (np.random.Generator): A random generator
+
+    Returns:
+        list: a list (length n_splits). Each element in the list should contain a
+            numpy array giving the indices of the instances in that split.
+    """
+    # Shuffle and split dataset into n_splits
+    shuffle = random_generator.permutation(len(dataset))
+    dataset = dataset[shuffle]
+    dataset_splits = np.array_split(dataset, n_splits)
+
+    return dataset_splits
+
+
 def perform_k_fold_cross_validation(
     dataset, n_splits=10, random_generator=default_rng()
 ):
@@ -168,50 +207,113 @@ def perform_k_fold_cross_validation(
     """
 
     # Shuffle and Split Dataset
-    shuffle = random_generator.permutation(len(dataset))
-    dataset = dataset[shuffle]
-    dataset_splits = np.array_split(dataset, n_splits)
+    dataset_splits = k_fold_split(n_splits, dataset, random_generator)
 
     # Run K-Fold Cross Validation
-    confusion_matrices = np.zeros((n_splits, 4, 4))  # Number of rooms is 4.
+    confusion_matrices, depths = np.zeros((n_splits, 4, 4)), np.zeros((n_splits, 1))
     for i in range(n_splits):
         # Split
         test_dataset = dataset_splits[i]
         train_dataset = np.vstack(dataset_splits[:i] + dataset_splits[i + 1 :])
 
         # Train
-        dtree, _ = tree.decision_tree_learning(train_dataset, 1)
+        dtree, depth = tree.decision_tree_learning(train_dataset, 1)
 
         # Evaluate
         y_gold, y_prediction = test_dataset[:, -1], predict(dtree, test_dataset[:, :-1])
+
+        # Save Depth and Confusion Matrix for a Fold
+        depths[i] = depth
         confusion_matrices[i] = generate_confusion_matrix(y_gold, y_prediction)
 
-    return np.mean(confusion_matrices, axis=0)
+    return np.mean(confusion_matrices, axis=0), np.mean(depths)
 
 
-def report_evaluation_metrics(dataset, n_splits=10):
-    """Reports accuracy, precision and recall rates per class, and F1 measures.
-    
+def perform_nested_k_fold_cross_validation(
+    dataset, n_splits=10, random_generator=default_rng()
+):
+    """Performs nested K-Fold Cross Validation
+
     Args:
         dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
         n_splits (int): Number of splits. Defaults to 10.
+        random_generator (np.random.Generator): A numpy random generator.
+
+    Returns:
+        Average Confusion Matrix (np.array): Average 4 by 4 confusion matrix over all folds.
     """
 
-    avg_confusion_matrix = perform_k_fold_cross_validation(dataset, n_splits)
-    print(f"Average Confusion Matrix over {n_splits} folds:\n {avg_confusion_matrix}\n")
+    # Shuffle and Split Dataset
+    dataset_splits = k_fold_split(n_splits, dataset, random_generator)
 
-    avg_accuracy = compute_accuracy(avg_confusion_matrix)
+    # Run Nested K-Fold Cross Validation
+    confusion_matrices = np.zeros((n_splits, 4, 4))
+    depths = np.zeros((n_splits, 1))
+
+    for i in range(n_splits):
+
+        # Split into Test and Train + Validation Datasets
+        test_dataset = dataset_splits[i]
+        train_validation_dataset = dataset_splits[:i] + dataset_splits[i + 1 :]
+
+        # Perform Nested Validation
+        best_confusion_matrix, best_accuracy, best_depth = None, 0, 0
+        for j in range(n_splits - 1):
+
+            # Split into Train and Validation Datasets
+            validation_dataset = train_validation_dataset[j]
+            train_dataset = np.vstack(
+                train_validation_dataset[:j] + train_validation_dataset[j + 1 :]
+            )
+
+            # Train & Prune
+            dtree, depth = tree.decision_tree_learning(train_dataset, 1)
+            tree.prune_tree(validation_dataset, dtree)
+
+            # Evaluate
+            y_gold = test_dataset[:, -1]
+            y_prediction = predict(dtree, test_dataset[:, :-1])
+
+            # Keep Track of Best Tree
+            confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
+            accuracy = compute_accuracy(confusion_matrix)
+
+            if compute_accuracy(confusion_matrix) > best_accuracy:
+                best_confusion_matrix = confusion_matrix
+                best_accuracy = accuracy
+                best_depth = depth
+
+        # Keep Track of Confusion Matrices
+        confusion_matrices[i] = best_confusion_matrix
+        depths[i] = best_depth
+
+    return np.mean(confusion_matrices, axis=0), np.mean(depths)
+
+
+def report_evaluation_metrics(confusion_matrix, avg_depth, n_splits=10):
+    """Reports accuracy, precision and recall rates per class, and F1 measures.
+
+    Args:
+        dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
+        avg_depth (float): Average tree depth.
+        n_splits (int): Number of splits. Defaults to 10.
+    """
+
+    print(f"Average Confusion Matrix over {n_splits} folds:\n {confusion_matrix}\n")
+    print(f"Average Tree Depth:\n {avg_depth}\n")
+
+    avg_accuracy = compute_accuracy(confusion_matrix)
     print(f"Average Overall Accuracy: {avg_accuracy}\n")
 
-    class_precisions, macro_precision = compute_precision(avg_confusion_matrix)
+    class_precisions, macro_precision = compute_precision(confusion_matrix)
     print(f"Precision per Class: {class_precisions}")
     print(f"Macro Precision: {macro_precision}\n")
 
-    class_recalls, macro_recall = compute_recall(avg_confusion_matrix)
+    class_recalls, macro_recall = compute_recall(confusion_matrix)
     print(f"Recalls per Class: {class_recalls}")
     print(f"Macro Recall: {macro_recall}\n")
 
-    class_f_score, macro_f = compute_f1_score(avg_confusion_matrix)
+    class_f_score, macro_f = compute_f1_score(confusion_matrix)
     print(f"F1-Score per Class: {class_f_score}")
     print(f"Macro F1-Score: {macro_f}\n")
 
