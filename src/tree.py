@@ -1,7 +1,8 @@
 import numpy as np
-import node
 from matplotlib import pyplot as plt
 
+import node
+import eval
 
 def get_entropy(labels, total):
     """Computes entropy given a dictionary containing counts for each label and the total number of all labels.
@@ -136,7 +137,7 @@ def plot_tree(node, depth, width, x=0, y=0):
         y (int, optional): Y Coordinate to plot the leaf node.
     """
 
-    if node.is_root():
+    if node.is_leaf():
         # Plot Leaf
         plt.text(
             x,
@@ -167,6 +168,58 @@ def plot_tree(node, depth, width, x=0, y=0):
         plot_tree(node.right, depth - 1, width / 2, x_r, y_r)
         return
 
+def prune_tree(dataset, root):
+    """Prunes tree to improve accuracy
+
+    Args:
+        dataset (np.ndarray): 
+        root (Node): 
+
+    Returns:
+        None: modifies root in place
+    """
+    root.pruned = True
+    # Terminating Conditions
+    if root.is_leaf(): 
+        return
+
+    #TODO: is this correct? Added this in to fix zero len bug, is it good? Dont prune if there's no validation data to decide on
+    # Merge with top condition once verified
+    if len(dataset) == 0:
+        return 
+
+    # print(f"x_{root.attribute} < {root.value}")
+    prune_tree(dataset[dataset[:, root.attribute] < root.value], root.left)
+    prune_tree(dataset[dataset[:, root.attribute] >= root.value], root.right)
+    
+    # Check Accuracy
+    if root.left.is_leaf() and root.right.is_leaf(): 
+        # Compute Accuracy on Val
+        y_gold, y_prediction = dataset[:, -1], eval.predict(root, dataset[:, :-1])
+
+        accuracy = eval.compute_accuracy_arrays(y_gold, y_prediction)
+
+        # Get the majority label and count, decide whether to replace
+        values, counts = np.unique(dataset[:, -1], return_counts=True)
+
+        # # getting the majority label of validation set without considering the labels of the root nodes: not correct? 
+        # majority_label = values[np.argmax(counts)]
+        # majority_count = np.amax(counts)
+
+        #TODO is this the correct? IDK but it seems to work a bit better than above
+        num_from_val = dict(zip(values, counts))
+        tmp_list = [(root.left.label, num_from_val.get(root.left.label,0)), (root.right.label, num_from_val.get(root.right.label,0))]
+        majority_label, majority_count = max(tmp_list, key=lambda item:item[1])
+
+        print(f"Accuracies: {accuracy}, {majority_count / len(dataset)}")
+        if accuracy <= majority_count / len(dataset):
+            # this doesnt work... root is a reference to a Python object, doing this simply points root to a different object leaving the original unchanged
+            # root = node.Node(label=majority_label)
+
+            root.make_leaf(majority_label) # probs more pythonic way of doing this...
+            print("Pruned")
+
+    return
 
 if __name__ == "__main__":
     pass

@@ -18,7 +18,7 @@ def predict(decision_tree, x):
     for idx, inst in enumerate(x):
         # Traverse tree until leaf
         curr_node = decision_tree
-        while not curr_node.is_root():
+        while not curr_node.is_leaf():
             if inst[curr_node.attribute] < curr_node.value:
                 curr_node = curr_node.left
             else:
@@ -215,6 +215,27 @@ def report_evaluation_metrics(dataset, n_splits=10):
     print(f"F1-Score per Class: {class_f_score}")
     print(f"Macro F1-Score: {macro_f}\n")
 
+def eval_prune_accuarcy():
+    
+    pass
+
+def compute_accuracy_arrays(y_gold, y_prediction):
+    """ Compute the accuracy given the ground truth and predictions
+
+    Args:
+    y_gold (np.ndarray): the correct ground truth/gold standard labels
+    y_prediction (np.ndarray): the predicted labels
+
+    Returns:
+    float : the accuracy
+    """
+
+    assert len(y_gold) == len(y_prediction)  
+    
+    try:
+        return np.sum(y_gold == y_prediction) / len(y_gold)
+    except ZeroDivisionError:
+        return 0
 
 if __name__ == "__main__":
     pass

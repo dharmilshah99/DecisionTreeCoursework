@@ -46,22 +46,49 @@ def eval_accuracy(d_tree: DecisionTree):
     x_test = d_tree.test_dataset[:, :-1]
     y_test = d_tree.test_dataset[:, -1]
     tree_predictions = eval.predict(d_tree.node, x_test)
-    d_tree.accuracy = eval.compute_accuracy(y_test, tree_predictions)
+    d_tree.accuracy = eval.compute_accuracy_arrays(y_test, tree_predictions)
     print(d_tree.accuracy)
+    return d_tree.accuracy
 
 
 def save_tree(d_tree: DecisionTree):
     tree.save_plot_tree_image(d_tree.node, d_tree.depth, "tree.png")
 
+def compute_accuracy_with_pruning():
+    # split into 10 folds - each with different test set
+    # for each of the remaining 9 folds 
+    pass
 
 def run_everything():
+    path = "wifi_db/noisy_dataset.txt"
+    _,_,dataset = parse.read_dataset(path)
+    train_dataset, test_dataset = parse.split_dataset(dataset, 0.2)
+    train_dataset, val_dataset = parse.split_dataset(train_dataset, 0.25)
+    print(np.shape(train_dataset))
+    print(np.shape(val_dataset))
+    print(np.shape(test_dataset))
+
     d_tree = DecisionTree()
-    path = "wifi_db/clean_dataset.txt"
+    d_tree.train_dataset, d_tree.test_dataset = train_dataset, test_dataset
+    build_tree(d_tree)
+    a = eval_accuracy(d_tree)
+    print("count:", d_tree.node.node_count())
+    tree.prune_tree(val_dataset, d_tree.node)
+    b = eval_accuracy(d_tree)
+    print("count:", d_tree.node.node_count())
+    print("After", d_tree.node.pruned)
+    print("done")
+    print("Improvement: ", b - a)
+    print("Accuracies: ", a, b)
+
+
+def run_it():
+    d_tree = DecisionTree()
+    path = "wifi_db/noisy_dataset.txt"
     parsing(d_tree, path)
     build_tree(d_tree)
     eval_accuracy(d_tree)
-    save_tree(d_tree)
-
+    # save_tree(d_tree)
 
 def run_report():
     path = "wifi_db/clean_dataset.txt"
@@ -77,5 +104,7 @@ def parse_and_build():
 
 
 if __name__ == "__main__":
-    # run_everything()
-    run_report()
+    # run_it()
+    # print()
+    run_everything()
+    # run_report()
