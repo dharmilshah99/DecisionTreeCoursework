@@ -201,7 +201,14 @@ def prune_tree(dataset, root):
 
         # Get Majority Placement
         values, counts = np.unique(dataset[:, -1], return_counts=True)
-        majority_label, majority_count = values[np.argmax(counts)], np.amax(counts)
+        frequency_map = dict(zip(values, counts))
+        majority_label, majority_count = max(
+            [
+                (root.left.label, frequency_map.get(root.left.label, 0)),
+                (root.right.label, frequency_map.get(root.right.label, 0)),
+            ],
+            key=lambda item: item[1],
+        )
 
         # Prune
         if accuracy <= (majority_count / len(dataset)):
