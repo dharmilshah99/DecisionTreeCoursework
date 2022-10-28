@@ -32,10 +32,10 @@ def pefrorm_evaluation(path):
     pruned_confusion_matrix, pruned_avg_depth = eval.perform_nested_k_fold_cross_validation(dataset, 10)
 
     # Print Metrics
-    print("### Unpruned Tree Metrics ###")
+    print(create_printing_banner("*** Unpruned Tree Metrics ***"))
     eval.report_evaluation_metrics(confusion_matrix, avg_depth)
 
-    print("### Pruned Tree Metrics ###")
+    print(create_printing_banner("*** Pruned Tree Metrics ***"))
     eval.report_evaluation_metrics(pruned_confusion_matrix, pruned_avg_depth)
 
 
@@ -49,13 +49,18 @@ def save_tree():
     dtree, depth = tree.decision_tree_learning(dataset)
     tree.save_plot_tree_image(dtree, depth, "clean_dataset_tree.png")
 
+def create_printing_banner(text, character='=', length=70):
+    banner_text = ' %s ' % text
+    banner = banner_text.center(length, character)
+    return banner
 
 if __name__ == "__main__":
 
     # Perform Evaluation
-    print("Clean Dataset Results:")
+    
+    print(create_printing_banner("Clean Dataset Results"))
     pefrorm_evaluation(CLEAN_DATASET_PATH)
-    print("Noisy Dataset Results:")
+    print(create_printing_banner("Noisy Dataset Results"))
     pefrorm_evaluation(NOISY_DATASET_PATH)
 
     # Plot Tree
