@@ -28,8 +28,7 @@ def pefrorm_evaluation(path):
     _, _, dataset = parse.read_dataset(path)
 
     # Evaluate
-    confusion_matrix, avg_depth = eval.perform_k_fold_cross_validation(dataset, 10)
-    pruned_confusion_matrix, pruned_avg_depth = eval.perform_nested_k_fold_cross_validation(dataset, 10)
+    confusion_matrix, avg_depth, pruned_confusion_matrix, pruned_avg_depth = eval.perform_k_fold_cross_validation(dataset, 10)
 
     # Print Metrics
     print(create_printing_banner("*** Unpruned Tree Metrics ***"))

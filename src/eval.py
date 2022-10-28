@@ -210,66 +210,27 @@ def perform_k_fold_cross_validation(
 
     # Run K-Fold Cross Validation
     confusion_matrices, depths = np.zeros((n_splits, 4, 4)), np.zeros((n_splits, 1))
+    pruned_confusion_matrices, pruned_depths = np.zeros((n_splits, 4, 4)), np.zeros((n_splits, 1))
+
     for i in range(n_splits):
         # Split
         test_dataset = dataset_splits[i]
-        train_dataset = np.vstack(dataset_splits[:i] + dataset_splits[i + 1 :])
-
-        # Train
-        dtree, depth = tree.decision_tree_learning(train_dataset, 1)
-
-        # Evaluate
-        y_gold, y_prediction = test_dataset[:, -1], predict(dtree, test_dataset[:, :-1])
-
-        # Save Depth and Confusion Matrix for a Fold
-        depths[i] = depth
-        confusion_matrices[i] = generate_confusion_matrix(y_gold, y_prediction)
-
-    return np.mean(confusion_matrices, axis=0), np.mean(depths)
-
-
-def perform_nested_k_fold_cross_validation(
-    dataset, n_splits=10, random_generator=default_rng()
-):
-    """Performs nested K-Fold Cross Validation
-
-    Args:
-        dataset (np.ndarray): Instances, numpy array with shape (N,K+1).
-        n_splits (int): Number of splits. Defaults to 10.
-        random_generator (np.random.Generator): A numpy random generator.
-
-    Returns:
-        Average Confusion Matrix (np.array): Average 4 by 4 confusion matrix over all folds.
-    """
-
-    # Shuffle and Split Dataset
-    dataset_splits = k_fold_split(n_splits, dataset, random_generator)
-
-    # Run Nested K-Fold Cross Validation
-    confusion_matrices = np.zeros((n_splits, 4, 4))
-    depths = np.zeros((n_splits, 1))
-
-    for i in range(n_splits):
-
-        # Split into Test and Train + Validation Datasets
-        test_dataset = dataset_splits[i]
         train_validation_dataset = dataset_splits[:i] + dataset_splits[i + 1 :]
 
+        
         # Perform Nested Validation
         best_confusion_matrix, best_accuracy, best_depth = None, 0, 0
+        best_pruned_confusion_matrix, best_pruned_accuracy, best_pruned_depth = None, 0, 0
         for j in range(n_splits - 1):
-
+    
             # Split into Train and Validation Datasets
             validation_dataset = train_validation_dataset[j]
             train_dataset = np.vstack(
                 train_validation_dataset[:j] + train_validation_dataset[j + 1 :]
             )
 
-            # Train & Prune
+            # Train 
             dtree, depth = tree.decision_tree_learning(train_dataset, 1)
-            tree.prune_tree(validation_dataset, dtree)
-            pruned_depth = dtree.get_depth()
-            assert(pruned_depth <= depth)
 
             # Evaluate
             y_gold = test_dataset[:, -1]
@@ -278,17 +239,40 @@ def perform_nested_k_fold_cross_validation(
             # Keep Track of Best Tree
             confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
             accuracy = compute_accuracy(confusion_matrix)
+            depth = dtree.get_depth()
 
             if compute_accuracy(confusion_matrix) > best_accuracy:
                 best_confusion_matrix = confusion_matrix
                 best_accuracy = accuracy
-                best_depth = pruned_depth
+                best_depth = depth
+            
+            # Prune Tree
+            tree.prune_tree(validation_dataset, dtree)
+            pruned_depth = dtree.get_depth()
+            assert(pruned_depth <= depth)
 
-        # Keep Track of Confusion Matrices
+            # Evaluate Pruned Tree
+            y_gold = test_dataset[:, -1]
+            y_prediction = predict(dtree, test_dataset[:, :-1])
+
+            # Keep Track of Best Pruned Tree
+            pruned_confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
+            pruned_accuracy = compute_accuracy(pruned_confusion_matrix)
+
+            if compute_accuracy(pruned_confusion_matrix) > best_pruned_accuracy:
+                best_pruned_confusion_matrix = pruned_confusion_matrix
+                best_pruned_accuracy = pruned_accuracy
+                best_pruned_depth = pruned_depth
+
+        # Save Depth and Confusion Matrix for a Fold
         confusion_matrices[i] = best_confusion_matrix
         depths[i] = best_depth
+        
+        # Save Pruned Depth and Confusion Matrix for a Fold
+        pruned_confusion_matrices[i] = best_pruned_confusion_matrix
+        pruned_depths[i] = best_pruned_depth
 
-    return np.mean(confusion_matrices, axis=0), np.mean(depths)
+    return np.mean(confusion_matrices, axis=0), np.mean(depths), np.mean(pruned_confusion_matrices, axis=0), np.mean(pruned_depths)
 
 
 def report_evaluation_metrics(confusion_matrix, avg_depth, n_splits=10):
