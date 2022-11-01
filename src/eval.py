@@ -3,6 +3,7 @@ from numpy.random import default_rng
 
 import tree
 
+
 def predict(decision_tree, x):
     """Performs prediction on some samples using a decision tree.
 
@@ -269,7 +270,7 @@ def perform_nested_k_fold_cross_validation(
             dtree, depth = tree.decision_tree_learning(train_dataset, 1)
             tree.prune_tree(validation_dataset, dtree)
             pruned_depth = dtree.get_depth()
-            assert(pruned_depth <= depth)
+            assert pruned_depth <= depth
 
             # Evaluate
             y_gold = test_dataset[:, -1]

@@ -29,7 +29,10 @@ def pefrorm_evaluation(path):
 
     # Evaluate
     confusion_matrix, avg_depth = eval.perform_k_fold_cross_validation(dataset, 10)
-    pruned_confusion_matrix, pruned_avg_depth = eval.perform_nested_k_fold_cross_validation(dataset, 10)
+    (
+        pruned_confusion_matrix,
+        pruned_avg_depth,
+    ) = eval.perform_nested_k_fold_cross_validation(dataset, 10)
 
     # Print Metrics
     print(create_printing_banner("*** Unpruned Tree Metrics ***"))
@@ -49,24 +52,26 @@ def save_tree():
     dtree, depth = tree.decision_tree_learning(dataset)
     tree.save_plot_tree_image(dtree, depth, "clean_dataset_tree.png")
 
-def create_printing_banner(text, character='=', length=70):
+
+def create_printing_banner(text, character="=", length=70):
     """Centers text in a banner of a specified length
 
     Args:
         text (str): The text to print in the banner.
         character (str): The character to form the banner with.
-        length (int): The total length of the banner
+        length (int): The total length of the banner.
+
     Returns:
-        banner (str): The final banner (e.g. '======== RESULTS ========')
+        banner (str): The final banner (e.g. '======== RESULTS ========').
     """
-    banner_text = ' %s ' % text
+    banner_text = " %s " % text
     banner = banner_text.center(length, character)
     return banner
+
 
 if __name__ == "__main__":
 
     # Perform Evaluation
-    
     print(create_printing_banner("Clean Dataset Results"))
     pefrorm_evaluation(CLEAN_DATASET_PATH)
     print(create_printing_banner("Noisy Dataset Results"))

@@ -18,6 +18,11 @@ class Node:
         self.label = label
 
     def make_leaf(self, label):
+        """Converts a node into a leaf with label.
+
+        Args:
+            label (int): Classification label of Node.
+        """
         self.left = None
         self.right = None
         self.attribute = None
@@ -51,6 +56,7 @@ class Node:
         if self.is_leaf():
             return 1
         return max(self.left.get_depth(), self.right.get_depth()) + 1
+
 
 if __name__ == "__main__":
     pass
