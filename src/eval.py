@@ -1,5 +1,3 @@
-from difflib import diff_bytes
-from unittest.case import DIFF_OMITTED
 import numpy as np
 from numpy.random import default_rng
 
