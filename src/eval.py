@@ -246,10 +246,12 @@ def perform_nested_k_fold_cross_validation(
     # Shuffle and Split Dataset
     dataset_splits = k_fold_split(n_splits, dataset, random_generator)
 
-    # Run Nested K-Fold Cross Validation
-    confusion_matrices = np.zeros((n_splits, 4, 4))
-    depths = np.zeros((n_splits, 1))
+    # Keep Track of Averages
+    num_of_combinations = n_splits * (n_splits - 1)
+    avg_confusion_matrix = np.zeros((4, 4))
+    avg_depth = 0
 
+    # Run Nested K-Fold Cross Validation
     for i in range(n_splits):
 
         # Split into Test and Train + Validation Datasets
@@ -276,20 +278,11 @@ def perform_nested_k_fold_cross_validation(
             y_gold = test_dataset[:, -1]
             y_prediction = predict(dtree, test_dataset[:, :-1])
 
-            # Keep Track of Best Tree
-            confusion_matrix = generate_confusion_matrix(y_gold, y_prediction)
-            accuracy = compute_accuracy(confusion_matrix)
+            # Keep Track Metrics
+            avg_confusion_matrix += generate_confusion_matrix(y_gold, y_prediction)
+            avg_depth += pruned_depth
 
-            if compute_accuracy(confusion_matrix) > best_accuracy:
-                best_confusion_matrix = confusion_matrix
-                best_accuracy = accuracy
-                best_depth = pruned_depth
-
-        # Keep Track of Confusion Matrices
-        confusion_matrices[i] = best_confusion_matrix
-        depths[i] = best_depth
-
-    return np.mean(confusion_matrices, axis=0), np.mean(depths)
+    return avg_confusion_matrix / num_of_combinations, avg_depth / num_of_combinations
 
 
 def report_evaluation_metrics(confusion_matrix, avg_depth, n_splits=10):
