@@ -16,15 +16,18 @@ class Node:
         self.attribute = attribute
         self.value = value
         self.label = label
-        self.pruned = False
 
     def make_leaf(self, label):
+        """Converts a node into a leaf with label.
+
+        Args:
+            label (int): Classification label of Node.
+        """
         self.left = None
         self.right = None
         self.attribute = None
         self.value = None
         self.label = label
-        self.pruned = False
 
     def is_leaf(self):
         """Checks if Node is a root.
@@ -35,9 +38,24 @@ class Node:
         return (self.left == None) and (self.right == None)
 
     def node_count(self):
+        """Returns how many children a node has.
+
+        Returns:
+            (int) Number of children in tree
+        """
         if self.is_leaf():
             return 1
-        return self.left.node_count() + self.right.node_count()
+        return self.left.node_count() + self.right.node_count() + 1
+
+    def get_depth(self):
+        """Returns depth of tree with node as root
+
+        Returns:
+            (int) Depth of tree
+        """
+        if self.is_leaf():
+            return 1
+        return max(self.left.get_depth(), self.right.get_depth()) + 1
 
 
 if __name__ == "__main__":
