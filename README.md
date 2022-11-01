@@ -30,9 +30,9 @@ python3 -c "import numpy as np; import torch; print(np); print(torch)"
 ## Running the Program
 
 Run `src/main.py` from the root directory to
-- create pruned and unpruned decision trees for each of the clean and noisy dataset
-- print out evaluation metrics for each tree
-- saves a visualisation of each tree in `images`
+- Create pruned and unpruned decision trees for each of the clean and noisy dataset
+- Print out evaluation metrics for each tree
+- Saves a visualisation of each tree in `images`
 
 The program can be ran with the following command:
 ```sh

@@ -50,6 +50,7 @@ def save_tree():
     tree.save_plot_tree_image(dtree, depth, "clean_dataset_tree.png")
 
 def create_printing_banner(text, character='=', length=70):
+    """Builds and Saves Tree for the Enitre Clean Dataset"""
     banner_text = ' %s ' % text
     banner = banner_text.center(length, character)
     return banner

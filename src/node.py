@@ -33,11 +33,21 @@ class Node:
         return (self.left == None) and (self.right == None)
 
     def node_count(self):
+        """Returns how many children a node has.
+
+        Returns:
+            (int) Number of children in tree
+        """
         if self.is_leaf():
             return 1
-        return self.left.node_count() + self.right.node_count()
+        return self.left.node_count() + self.right.node_count() + 1
 
     def get_depth(self):
+        """Returns depth of tree with node as root
+
+        Returns:
+            (int) Depth of tree
+        """
         if self.is_leaf():
             return 1
         return max(self.left.get_depth(), self.right.get_depth()) + 1
