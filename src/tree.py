@@ -122,8 +122,9 @@ def save_plot_tree_image(node, depth, filename):
         depth (int): Maximum depth of the decision tree.
         filename (str): Filename to save image under the "images/" folder.
     """
-    plt.figure(figsize=(128, 128), dpi=100)  # TODO: Check image size limits.
-    plot_tree(node, depth, 128)
+    plt.figure(figsize=(32, 32), dpi=100)
+    plot_tree(node, depth, 16)
+    plt.axis('off')
     plt.savefig("images/" + filename)
 
 
