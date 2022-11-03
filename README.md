@@ -1,13 +1,13 @@
 # DecisionTreeCoursework
-Introduction to ML - Decision Tree Coursework
-The purpose of the coursework is to implement a decision tree algorithm and use it to determine one of the indoor
-locations based on WIFI signal strengths collected from a mobile phone. The decicion tree should be built and tested using the two datasets provided: `wifi_db/clean_dataset.txt` and `wifi_db/noisy_dataset.txt`.
+This coursework implements a decision tree algorithm identify rooms based on WiFi signal strengths collected from a mobile phone. Trees are trained, validated and tested on two datasets: `wifi_db/clean_dataset.txt` and `wifi_db/noisy_dataset.txt`. 
+
 The coursework can be split into 4 major steps:
 1. Loading Data.
 2. Creating Decision Trees.
 3. Evaluation of trees using 10-fold cross validation.
-4. Pruning and analysis of the trees.
+4. Pruning and evaluation of trees using nested 10-fold cross validation..
 
+An evaluation of pruned and unpruned trees, and a visualization of a tree trained on the entire clean dataset is done in the report found in `docs/Decision_Tree_Coursework_Report.pdf`.
 
 ## Setting up Virtual Environment
 
@@ -41,7 +41,7 @@ python3 src/main.py
 
 ## Output
 
-After running the program, the following data are being printed for both `wifi_db/clean_dataset.txt` and `wifi_db/noisy_dataset.txt`:
+After running the program, the following data are being printed for trees trained on `wifi_db/clean_dataset.txt` and `wifi_db/noisy_dataset.txt`:
 1. Average Tree Depth
 2. Average of Confusion Matrices over 10 folds
 3. Average Overall Accuracy
